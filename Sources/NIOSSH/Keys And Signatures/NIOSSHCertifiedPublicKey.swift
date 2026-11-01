@@ -1,3 +1,4 @@
+// Modified for AeroOps: verifies rsa-sha2-256 and rsa-sha2-512 host keys. See RSAHostKey.swift.
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -359,6 +360,8 @@ extension NIOSSHCertifiedPublicKey {
             return Self.p384KeyPrefix
         case .ecdsaP521:
             return Self.p521KeyPrefix
+        case .rsa:
+            return "ssh-rsa-cert-v01@openssh.com".utf8
         case .certified:
             preconditionFailure("base key cannot be certified")
         }

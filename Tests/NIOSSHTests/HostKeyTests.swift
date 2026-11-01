@@ -1,3 +1,4 @@
+// Modified for AeroOps: ssh-rsa is now recognised, so this test uses ssh-dss.
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -254,7 +255,7 @@ final class HostKeyTests: XCTestCase {
 
     func testUnrecognisedKey() throws {
         var buffer = ByteBufferAllocator().buffer(capacity: 1024)
-        buffer.writeSSHString("ssh-rsa".utf8)
+        buffer.writeSSHString("ssh-dss".utf8)
 
         XCTAssertThrowsError(try buffer.readSSHHostKey()) { error in
             XCTAssertEqual((error as? NIOSSHError).map { $0.type }, .unknownPublicKey)

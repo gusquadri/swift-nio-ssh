@@ -1,3 +1,4 @@
+// Modified for AeroOps: verifies rsa-sha2-256 and rsa-sha2-512 host keys. See RSAHostKey.swift.
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -289,7 +290,12 @@ struct SSHKeyExchangeStateMachine {
         case .keyExchangeInitSent(exchange: var exchanger, let negotiated):
             switch self.role {
             case .client:
-                guard message.hostKey.keyPrefix.elementsEqual(negotiated.negotiatedHostKeyAlgorithm.utf8) else {
+                guard
+                    message.hostKey.fits(
+                        hostKeyAlgorithm: negotiated.negotiatedHostKeyAlgorithm,
+                        signature: message.signature
+                    )
+                else {
                     throw NIOSSHError.invalidHostKeyForKeyExchange(
                         expected: negotiated.negotiatedHostKeyAlgorithm,
                         got: message.hostKey.keyPrefix
@@ -603,6 +609,7 @@ extension SSHKeyExchangeStateMachine {
     /// All known host key algorithms.
     static let supportedServerHostKeyAlgorithms: [Substring] = [
         "ssh-ed25519", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp521",
+        "rsa-sha2-512", "rsa-sha2-256",
     ]
 }
 

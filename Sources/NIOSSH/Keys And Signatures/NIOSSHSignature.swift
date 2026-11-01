@@ -1,3 +1,4 @@
+// Modified for AeroOps: verifies rsa-sha2-256 and rsa-sha2-512 host keys. See RSAHostKey.swift.
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -41,6 +42,8 @@ extension NIOSSHSignature {
         case ecdsaP384(P384.Signing.ECDSASignature)
 
         case ecdsaP521(P521.Signing.ECDSASignature)
+
+        case rsa(RSAHostSignature)
 
         internal enum RawBytes {
             case byteBuffer(ByteBuffer)
@@ -93,10 +96,13 @@ extension NIOSSHSignature.BackingSignature: Equatable {
             return lhs.rawRepresentation == rhs.rawRepresentation
         case (.ecdsaP521(let lhs), .ecdsaP521(let rhs)):
             return lhs.rawRepresentation == rhs.rawRepresentation
+        case (.rsa(let lhs), .rsa(let rhs)):
+            return lhs == rhs
         case (.ed25519, _),
             (.ecdsaP256, _),
             (.ecdsaP384, _),
-            (.ecdsaP521, _):
+            (.ecdsaP521, _),
+            (.rsa, _):
             return false
         }
     }
@@ -117,6 +123,9 @@ extension NIOSSHSignature.BackingSignature: Hashable {
         case .ecdsaP521(let sig):
             hasher.combine(3)
             hasher.combine(sig.rawRepresentation)
+        case .rsa(let sig):
+            hasher.combine(4)
+            hasher.combine(sig)
         }
     }
 }
@@ -134,6 +143,8 @@ extension ByteBuffer {
             return self.writeECDSAP384Signature(baseSignature: sig)
         case .ecdsaP521(let sig):
             return self.writeECDSAP521Signature(baseSignature: sig)
+        case .rsa(let sig):
+            return self.writeRSASignature(sig)
         }
     }
 
@@ -229,6 +240,8 @@ extension ByteBuffer {
                 return try buffer.readECDSAP384Signature()
             } else if bytesView.elementsEqual(NIOSSHSignature.ecdsaP521SignaturePrefix) {
                 return try buffer.readECDSAP521Signature()
+            } else if let algorithm = RSAHostSignature.Algorithm(name: bytesView) {
+                return buffer.readRSASignature(algorithm)
             } else {
                 // We don't know this signature type.
                 let signature =
